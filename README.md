@@ -136,7 +136,7 @@ Chạy `02_descriptive_diagnostic.ipynb`:
 
 - Đọc `outputs/config.json` và `outputs/model_data_top12.csv`.
 - Tạo coverage theo năm và bang–năm trước khi lọc. Đối chiếu số bản ghi, địa bàn và cây giữa các năm để giải thích quyết định về 2015.
-- Sau khi quyết định loại 2015, tạo bảng dữ liệu giai đoạn 1998–2014. Không ghi đè file đầu vào còn 2015 nếu cần giữ bằng chứng trước–sau.
+- Sau khi quyết định loại 2015, giữ dữ liệu đến hết 2014, bắt đầu từ năm đầu tiên thực có trong nguồn (hiện là 1997). Không ghi đè file đầu vào còn 2015 nếu cần giữ bằng chứng trước–sau. Một số biểu đồ riêng vẫn khảo sát 1998–2014 theo nhãn của hình.
 - Tạo thống kê, availability và biểu đồ mô tả từ dữ liệu cuối cùng.
 - Thực hiện chẩn đoán phục vụ minh họa khuyến nghị trên dữ liệu đến hết 2012. Nếu kết quả dùng để thiết kế/chọn biến mô hình, chỉ dùng train.
 - Tạo `Year_Index = Crop_Year - 1998` trước khi chia tập, nếu chưa có.
@@ -144,13 +144,17 @@ Chạy `02_descriptive_diagnostic.ipynb`:
 
 | Tập | Năm | Mục đích |
 |---|---|---|
-| `train.csv` | 1998–2010 | Học mô hình |
+| `train.csv` | 1997–2010 với nguồn hiện tại | Học mô hình |
 | `validation.csv` | 2011–2012 | Chọn thuật toán và tham số |
 | `test.csv` | 2013–2014 | Đánh giá cuối cùng |
 
+Chia theo thời gian để mô phỏng học từ quá khứ và dự đoán các năm tiếp theo. Chia ngẫu nhiên có thể đưa quan sát tương lai vào tập huấn luyện, làm đánh giá khả năng dự báo quá lạc quan. Chỉ chọn thuật toán/tham số bằng validation; sau khi chốt cấu hình mới fit lại trên train + validation và đánh giá test. Bảng `output_02/split_summary.csv` ghi năm và số dòng thực tế của từng tập.
+
+Phần mô tả giữ tất cả bang có dữ liệu. Mô hình chỉ xét 8 bang do nhóm chọn cho phạm vi minh họa: Uttar Pradesh, Madhya Pradesh, Maharashtra, Rajasthan, Karnataka, Bihar, West Bengal và Tamil Nadu. Danh sách được đặt trước khi so sánh mô hình; đây không phải kết quả chọn các bang có điểm test cao và không đại diện mọi địa bàn. `output_02/state_split_coverage.csv` ghi số dòng train/validation/test của từng bang. Bang không có test được ghi là chưa được kiểm chứng riêng, không bổ sung dữ liệu giả để đủ địa bàn.
+
 Các tập có cùng cấu trúc cột. Đầu vào mô hình là `Year_Index`, `State_Name`, `District_ID`, `Crop`, `Season`; biến mục tiêu là `Yield`. Giữ thêm `District_Name`, `Crop_Year`, `Area`, `Production`, `Outlier_Flag` để đối chiếu nếu các cột này có trong dữ liệu bàn giao. Không đưa `Yield`, `Production`, `Outlier_Flag` vào FEATURES.
 
-Bảng kết quả mô tả/chẩn đoán và `figure_notes_analysis.csv` lưu trong `output_02`. Biểu đồ lưu trong `figures`; bảng ghi chú cần có hai cột `File`, `Comment` để thành viên 3 gộp.
+Bảng kết quả mô tả/chẩn đoán và `figure_notes_analysis.csv` lưu trong `output_02`. Biểu đồ lưu trong `figures`; mỗi hình có nhận xét 1–2 câu được tính từ dữ liệu và in ngay bên dưới. Bảng ghi chú có `File`, `Chart`, `Comment`, dùng tên tệp hình thực tế; gồm cả các hình bổ sung mang tiền tố `extra_` để thành viên 3 gộp.
 
 ### Bước 3 — Thành viên 3: dự đoán và chỉ định
 
@@ -167,6 +171,10 @@ Chạy `03_model_recommendation.ipynb`:
 - Lưu kết quả vào `output_03`; hình 7, 8 vào `figures`.
 
 Các file chính gồm `validation_metrics.csv`, `test_metrics.csv`, `test_predictions.csv`, `metrics_by_crop.csv`, `metrics_by_state.csv`, `low_yield_metrics.csv`, `importance.csv`, `recommendations.csv`, `season_candidates.csv`, `model_info.json`.
+
+Các ngưỡng phân loại đề xuất được giữ trong `THRESHOLDS`, xuất ra `recommendation_thresholds.csv` (giá trị, lý do và nguồn quy ước) và `recommendation_thresholds.json`. Đây là quy tắc minh họa của nhóm, chưa được xác nhận là ngưỡng tối ưu. Cấu hình gốc yêu cầu tối thiểu 8 năm lịch sử, 3 năm gần đây, dữ liệu đến 2012 và 10 quan sát validation cấp bang–cây–mùa. Mức ưu tiên yêu cầu ít nhất 10 năm, CV ≤ 25%, NMAE ≤ 0,3, xu hướng không âm và dự đoán ≥ trung bình lịch sử; cảnh báo khi CV > 40%, NMAE > 0,5 hoặc slope/mean < −2%/năm.
+
+Kiểm tra độ nhạy trong `recommendation_sensitivity.csv` so sánh cấu hình gốc với cấu hình siết/nới 20% các ngưỡng CV, NMAE và mức giảm, giữ nguyên yêu cầu độ phủ và mô hình. `recommendation_sensitivity_detail.csv` ghi mức đề xuất từng nhóm trong cả 3 cấu hình. `recommendations.csv` bổ sung `Rule_Explanation` để giải thích phân loại và `Threshold_Stable` cho biết phân loại có giữ nguyên trong cả 3 cấu hình hay không. Phép kiểm tra chỉ dùng lịch sử phát triển và sai số validation, không dùng test để điều chỉnh ngưỡng; độ ổn định theo ngưỡng chưa chứng minh hiệu quả canh tác.
 
 Đọc ghi chú phân tích từ `OUT2 / "figure_notes_analysis.csv"`, không phải OUT3. Nếu chưa có file đó, lưu riêng `figure_notes_model.csv`; bổ sung bảng nhận xét tổng hợp sau khi thành viên 2 bàn giao.
 
