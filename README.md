@@ -178,6 +178,10 @@ Kiểm tra độ nhạy trong `recommendation_sensitivity.csv` so sánh cấu h�
 
 Đọc ghi chú phân tích từ `OUT2 / "figure_notes_analysis.csv"`, không phải OUT3. Nếu chưa có file đó, lưu riêng `figure_notes_model.csv`; bổ sung bảng nhận xét tổng hợp sau khi thành viên 2 bàn giao.
 
+Notebook 03 hỗ trợ `config.json` cũ chưa có `split_strategy`, `split_years`, `model_scope_note`, `states_without_test`: khoảng năm và độ phủ được suy ra từ các CSV train/validation/test đã đọc; chiến lược chỉ ghi `time_based` khi các khoảng năm nối tiếp không chồng lấn. Notebook in thông báo khi phải bổ sung metadata. Các CSV đầu vào vẫn phải tồn tại; chạy 01 → 02 → 03 để tạo lại toàn bộ kết quả nhất quán. Bảng nhận xét cũ dạng `Main_Finding`/`Limitation` cũng được chuyển đổi sang `Comment` và tên hình hiện tại.
+
+Phiên bản này đã được kiểm tra từ thư mục chạy mới, không dùng lại outputs/config cũ: notebook 01 chạy 13/13 ô mã, notebook 02 chạy 28/28 và notebook 03 chạy 8/8, không có output lỗi. Hai notebook 02 và 03 trong repository đã lưu `execution_count` liên tục cùng output của lần chạy này. Kiểm tra kết quả xác nhận 13 hình có nhận xét, 3 mô hình có metric hữu hạn, 4.969 nhóm đề xuất, bảng độ phủ giữ tên bang và năm 1997. Đoạn xuất metadata được kiểm tra với 10 trường hợp config mới/cũ, thiếu hoặc null từng khóa mới; đoạn gộp nhận xét được kiểm tra với cả định dạng cũ và mới.
+
 Các thống kê toàn giai đoạn chứa năm test chỉ phục vụ mô tả; không dùng để chỉnh mô hình hoặc thiết kế quy tắc rồi coi test là độc lập. Nếu thay dữ liệu, đặc trưng hoặc cấu hình, chạy lại các bước liên quan theo thứ tự; không dùng mô hình hoặc kết quả cũ cho phạm vi mới.
 
 ## 5. Dashboard
